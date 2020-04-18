@@ -1,10 +1,15 @@
 package com.nasim.controller;
 
+
+import static org.springframework.hateoas.mvc.ControllerLinkBuilder.*;
 import java.util.List;
 
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.hateoas.Link;
+import org.springframework.hateoas.Resource;
+import org.springframework.hateoas.mvc.ControllerLinkBuilder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -33,6 +38,14 @@ public class PostController {
 	@Autowired
 	private CommentRepository commentRepository;
 
+	@GetMapping
+	public List<Post> getPost() {
+		
+		
+		return postRepository.findAll();
+		
+	}
+	
 	// @ResponseStatus(code = HttpStatus.CREATED)
 	@PostMapping
 	public ResponseEntity<Post> createdPost(@Valid @RequestBody Post post,BindingResult result) {
@@ -43,22 +56,24 @@ public class PostController {
 		return new ResponseEntity<Post>(savePost,HttpStatus.CREATED);
 	}
 
-	@GetMapping
-	public List<Post> getPost() {
-		return postRepository.findAll();
-	}
 
 	@GetMapping("/{id}")
-	public Post findPost(@PathVariable("id") int id) {
-		return postRepository.findById(id)
+	public Resource<Post> findPost(@PathVariable("id") int id) {
+		Post post=postRepository.findById(id)
 				.orElseThrow(() -> new ResourceNotFoundException("Not post found with id = " + id));
+		Resource<Post> resource=new Resource<Post>(post);
+		Link links=linkTo(ControllerLinkBuilder.methodOn(PostController.class).getPost()).withRel("posts");
+		resource.add(links);
+		return resource;
 	}
 
 	@PutMapping("/{id}")
-	public Post updatePost(@PathVariable("id") int id, @RequestBody Post post) {
-		postRepository.findById(id).
-		orElseThrow(() -> new ResourceNotFoundException("Not post found with id = " + id));
-		return postRepository.save(post);
+	public ResponseEntity<Post> updatePost(@PathVariable("id") int id,@Valid @RequestBody Post post,BindingResult result) {
+		if(result.hasErrors()) {
+			return new ResponseEntity<>(post,HttpStatus.BAD_REQUEST);
+		}
+		Post savePost=postRepository.save(post);
+		return new ResponseEntity<Post>(savePost,HttpStatus.CREATED);
 	}
 
 	@DeleteMapping("/{id}")
@@ -70,14 +85,19 @@ public class PostController {
 	
 	@ResponseStatus(code = HttpStatus.CREATED)
 	@PostMapping("/{id}/comments")
-	public void createPostComment(@PathVariable("id")int id,@RequestBody Comment comment) {
+	public  void createPostComment(@PathVariable("id")int id,@Valid @RequestBody Comment comment,BindingResult result) {
+		
 		Post post=postRepository.findById(id).
 				orElseThrow(()->new ResourceNotFoundException("Not post found with id = " + id));
 		post.getComments().add(comment);
-	}
+		}
 	
 	@DeleteMapping("/{postId}/comments/{commentId}")
 	public void deletePostComment(@PathVariable("postId") int postId,@PathVariable("commentId")int commentId) {
+		postRepository.findById(postId).
+				orElseThrow(() -> new ResourceNotFoundException("Not post found with id = " + postId));
+		commentRepository.findById(commentId).
+				orElseThrow(() -> new ResourceNotFoundException("Not comment found with id = " + commentId));
 		commentRepository.deleteById(commentId);
 	}
 

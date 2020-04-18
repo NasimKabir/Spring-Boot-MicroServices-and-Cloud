@@ -14,6 +14,11 @@ import javax.persistence.Table;
 import javax.persistence.Temporal;
 import javax.persistence.TemporalType;
 
+import org.springframework.hateoas.Resource;
+
+import com.fasterxml.jackson.annotation.JsonBackReference;
+import com.fasterxml.jackson.annotation.JsonManagedReference;
+
 @Entity
 @Table(name="posts")
 public class Post {
@@ -36,6 +41,7 @@ public class Post {
 	@Column(name="updated_on")
 	private Date updatedOn;
 	
+	@JsonManagedReference
 	@OneToMany
 	@JoinColumn(name="post_id")
 	private List<Comment>comments;
@@ -89,6 +95,10 @@ public class Post {
 
 	public void setComments(List<Comment> comments) {
 		this.comments = comments;
+	}
+
+	public Post() {
+		super();
 	}
 	
 	
