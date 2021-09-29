@@ -15,10 +15,6 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.password.PasswordEncoder;
-
-import com.nasim.jwt.JwtConfig;
-import com.nasim.jwt.JwtTokenVerifier;
-import com.nasim.jwt.JwtUsernamePasswordAuthenticationFilter;
 import com.nasim.security.CustomUserDetailsService;
 
 @Configuration
@@ -27,17 +23,13 @@ import com.nasim.security.CustomUserDetailsService;
 public class SpringSecurityConfig extends WebSecurityConfigurerAdapter{
 	private final CustomUserDetailsService customUserDetailsService;
 	private final PasswordEncoder passwordEncoder;
-	private final JwtConfig jwtConfig;
-    private final SecretKey secretKey;
+
     
     @Autowired
-	public SpringSecurityConfig(CustomUserDetailsService customUserDetailsService, PasswordEncoder passwordEncoder,
-			JwtConfig jwtConfig, SecretKey secretKey) {
+	public SpringSecurityConfig(CustomUserDetailsService customUserDetailsService, PasswordEncoder passwordEncoder) {
 		super();
 		this.customUserDetailsService = customUserDetailsService;
 		this.passwordEncoder = passwordEncoder;
-		this.jwtConfig = jwtConfig;
-		this.secretKey = secretKey;
 	}
 
 	  
@@ -68,13 +60,9 @@ public class SpringSecurityConfig extends WebSecurityConfigurerAdapter{
          .sessionManagement()
          .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
          .and()
-         .addFilter(new JwtUsernamePasswordAuthenticationFilter(authenticationManager(), jwtConfig, secretKey))
-         .addFilterAfter(new JwtTokenVerifier(secretKey, jwtConfig), JwtUsernamePasswordAuthenticationFilter.class)
          .authorizeRequests()
-         .antMatchers("/login").permitAll()
-         .antMatchers("/api/v1/**").permitAll()
          .antMatchers(HttpMethod.OPTIONS, "/login").permitAll()//allow CORS option calls
-         .antMatchers(HttpMethod.POST, "/login").permitAll()
+         .antMatchers( "/api/v1/**").permitAll()
          .anyRequest()
          .authenticated();
 		 

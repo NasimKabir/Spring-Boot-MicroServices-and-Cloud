@@ -1,18 +1,15 @@
 package com.nasim.controller;
 
+import static org.springframework.http.HttpStatus.ACCEPTED;
+import static org.springframework.http.HttpStatus.CREATED;
+import static org.springframework.http.HttpStatus.OK;
+
 import java.util.List;
-import java.util.Optional;
 
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.hateoas.Link;
-import org.springframework.hateoas.Resource;
-import org.springframework.hateoas.mvc.ControllerLinkBuilder;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -23,9 +20,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.nasim.exceptionHandeling.UserNotFoundException;
 import com.nasim.model.User;
-import com.nasim.repository.UserRepository;
+import com.nasim.service.UserService;
 
 @RestController
 @RequestMapping("/api/v1")
@@ -33,45 +29,40 @@ import com.nasim.repository.UserRepository;
 //@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
 public class UserController {
 	@Autowired
-	private UserRepository userRepository;
+	private UserService userService;
 
-	@Autowired
-	private PasswordEncoder passwordEncoder;
 
 	@PostMapping("/users")
 	public ResponseEntity<User> createdPost(@Valid @RequestBody User user) {
-		if (userRepository.existsByUsername(user.getUsername())) {
-			throw new RuntimeException(user.getUsername() + " doesn't exists !");
-		}
-		user.setPassword(passwordEncoder.encode(user.getPassword()));
-		userRepository.save(user);
-		return new ResponseEntity<User>(user, HttpStatus.CREATED);
+		user=userService.save(user);
+		return new ResponseEntity<User>(user, CREATED);
 	}
 
 	
 	@GetMapping("/users")
-	public List<User> GetAllUsers() {
-		return userRepository.findAll();
+	public ResponseEntity<List<User>> GetAllUsers() {
+		  List<User> users = userService.findAll();
+		  return new ResponseEntity<>(users, OK);
 	}
 
 	@GetMapping("/users/{id}")
-	public User findOne(@PathVariable int id) {
-		return userRepository.findById(id)
-				.orElseThrow(()->new UserNotFoundException("id-" + id));
+	public ResponseEntity<?> findOne(@PathVariable int id) {
+		 User user =  userService.findByTodoId(id);
+		 return new ResponseEntity<>(user, OK);
 	}
 
-	@DeleteMapping("/users/{id}")
-	public void deleteUser(@PathVariable int id) {
-		User user = userRepository.findById(id)
-				.orElseThrow(()->new UserNotFoundException("id-" + id));
-		userRepository.deleteById(id);
-	}
-
-	
 	@PutMapping("/users/{id}")
 	public ResponseEntity<User> updateUser(@Valid @RequestBody User user,@PathVariable("id")int id) {
-		 userRepository.save(user);
+		user=userService.update(user);
 		
-		return new ResponseEntity<User>(user,HttpStatus.OK);
+		return new ResponseEntity<User>(user,OK);
 	}
+	
+	
+	@DeleteMapping("/users/{id}")
+	public ResponseEntity<Void> deleteUser(@PathVariable("id") int id) {
+		 userService.deleteByTodoId(id);
+		return new ResponseEntity<Void>(ACCEPTED);
+	}
+	
 }
