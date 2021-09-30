@@ -5,10 +5,14 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.springframework.http.HttpStatus;
+
 import com.nasim.exception.FieldValidationError;
 
 import lombok.Data;
+import lombok.NoArgsConstructor;
 @Data
+@NoArgsConstructor
 public class Response {
 
 	private Date timeStamp;
@@ -21,5 +25,15 @@ public class Response {
 	
 	private Map<String,List<FieldValidationError>>errors= new HashMap<String, List<FieldValidationError>>();
 
-	
+	public Response(Date timeStamp, int status, String title) {
+		this.timeStamp = timeStamp;
+		this.status = status;
+		this.title = title;
+	}
+
+	public Response(int status, String title) {
+		this.status = status;
+		this.title = title;
+	}
+
 }
