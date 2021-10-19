@@ -18,7 +18,7 @@ public class Todo {
 	@Id
 	@GeneratedValue
 	private Long id;
-	private String username;
+	private String name;
 	private String description;
 	private Date targetDate;
 	private boolean isDone;

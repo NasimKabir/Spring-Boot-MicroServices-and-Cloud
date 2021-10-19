@@ -1,5 +1,6 @@
 package com.nasim.service;
 
+import java.util.Date;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,11 +14,13 @@ public class TodoService {
 	@Autowired
 	private TodoJpaRepository todoJpaRepository;
 
-	public List<Todo> findAll() {
+	public List<Todo> findAllTodos() {
 		return todoJpaRepository.findAll();
 	}
 
 	public Todo save(Todo todo) {
+		todo.setDone(true);
+		todo.setTargetDate(new Date());
 		return todoJpaRepository.save(todo);
 	}
 	

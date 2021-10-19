@@ -7,5 +7,5 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import com.nasim.model.Todo;
 
 public interface TodoJpaRepository extends JpaRepository<Todo, Long> {
-	List<Todo> findByUsername(String username);
+	List<Todo> findByName(String username);
 }

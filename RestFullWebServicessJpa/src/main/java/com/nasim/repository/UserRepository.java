@@ -8,7 +8,7 @@ import com.nasim.model.User;
 
 public interface UserRepository extends JpaRepository<User, Long> {
 
-	User findByUsername(String username);
+	 User findUserByUsername(String username);
     Boolean existsByUsername(String username);
 
 }

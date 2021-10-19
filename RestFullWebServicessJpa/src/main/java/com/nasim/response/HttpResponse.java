@@ -13,7 +13,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
-public class Response {
+public class HttpResponse {
 
 	private Date timeStamp;
 	
@@ -25,13 +25,13 @@ public class Response {
 	
 	private Map<String,List<FieldValidationError>>errors= new HashMap<String, List<FieldValidationError>>();
 
-	public Response(Date timeStamp, int status, String title) {
+	public HttpResponse(Date timeStamp, int status, String title) {
 		this.timeStamp = timeStamp;
 		this.status = status;
 		this.title = title;
 	}
 
-	public Response(int status, String title) {
+	public HttpResponse(int status, String title) {
 		this.status = status;
 		this.title = title;
 	}

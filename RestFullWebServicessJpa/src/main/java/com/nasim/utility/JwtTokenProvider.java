@@ -1,129 +1,92 @@
 package com.nasim.utility;
-
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
+import static com.auth0.jwt.algorithms.Algorithm.HMAC512;
+import static com.nasim.constant.SecurityConstant.*;
+import static java.util.Arrays.stream;
+import java.util.ArrayList;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.SignatureAlgorithm;
+import com.auth0.jwt.JWT;
+import com.auth0.jwt.algorithms.Algorithm;
+import com.auth0.jwt.exceptions.JWTVerificationException;
+import com.auth0.jwt.interfaces.JWTVerifier;
+import com.nasim.model.UserPrincipal;
+
 
 @Component
 public class JwtTokenProvider {
+	@Value("${jwt.secret}")
+    private String secret;
 
-	@Value("${jwt.auth.app}")
-	private String appName;
-	
-	@Value("${jwt.auth.secret_key}")
-	private String secretKey;
-	
-	@Value("${jwt.auth.expires_in}")
-    private int expiresIn;
-	
-	private SignatureAlgorithm SIGNATURE_ALGORITHM = SignatureAlgorithm.HS256;
+    public String generateJwtToken(UserPrincipal userPrincipal) {
+        String[] claims = getClaimsFromUser(userPrincipal);
+        return JWT.create().withIssuer(GET_ARRAYS_LLC).withAudience(GET_ARRAYS_ADMINISTRATION)
+                .withIssuedAt(new Date()).withSubject(userPrincipal.getUsername())
+                .withArrayClaim(AUTHORITIES, claims).withExpiresAt(new Date(System.currentTimeMillis() + EXPIRATION_TIME))
+                .sign(HMAC512(secret.getBytes()));
+    }
+    
+   
+    public List<GrantedAuthority> getAuthorities(String token) {
+        String[] claims = getClaimsFromToken(token);
+        return stream(claims).map(SimpleGrantedAuthority::new).collect(Collectors.toList());
+    }
 
-	
-	public String getUsernameFormJwtToken(String token) {
-		return Jwts.parser().setSigningKey(secretKey).parseClaimsJws(token).getBody().getSubject();
-	}
+    public Authentication getAuthentication(String username, List<GrantedAuthority> authorities, HttpServletRequest request) {
+        UsernamePasswordAuthenticationToken userPasswordAuthToken = new
+                UsernamePasswordAuthenticationToken(username, null, authorities);
+        userPasswordAuthToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+        return userPasswordAuthToken;
+    }
 
+    public boolean isTokenValid(String username, String token) {
+        JWTVerifier verifier = getJWTVerifier();
+        return StringUtils.isNotEmpty(username) && !isTokenExpired(verifier, token);
+    }
 
-	
-	private Claims getAllClaimsFromToken(String token) {
-        Claims claims;
+    public String getSubject(String token) {
+        JWTVerifier verifier = getJWTVerifier();
+        return verifier.verify(token).getSubject();
+    }
+
+    private boolean isTokenExpired(JWTVerifier verifier, String token) {
+        Date expiration = verifier.verify(token).getExpiresAt();
+        return expiration.before(new Date());
+    }
+
+    private String[] getClaimsFromToken(String token) {
+        JWTVerifier verifier = getJWTVerifier();
+        return verifier.verify(token).getClaim(AUTHORITIES).asArray(String.class);
+    }
+
+    public JWTVerifier getJWTVerifier() {
+        JWTVerifier verifier;
         try {
-            claims = Jwts.parser()
-                    .setSigningKey(secretKey)
-                    .parseClaimsJws(token)
-                    .getBody();
-        } catch (Exception e) {
-            claims = null;
+            Algorithm algorithm = HMAC512(secret);
+            verifier = JWT.require(algorithm).withIssuer(GET_ARRAYS_LLC).build();
+        }catch (JWTVerificationException exception) {
+            throw new JWTVerificationException(TOKEN_CANNOT_BE_VERIFIED);
         }
-        return claims;
+        return verifier;
     }
 
-	
-	 public String getUsernameFromToken(String token) {
-	        String username;
-	        try {
-	            final Claims claims = this.getAllClaimsFromToken(token);
-	            username = claims.getSubject();
-	        } catch (Exception e) {
-	            username = null;
-	        }
-	        return username;
-	 }
-	 
-	 public String generateToken(String username) throws InvalidKeySpecException, NoSuchAlgorithmException {
-	        
-	        return Jwts.builder()
-	                .setIssuer( appName )
-	                .setSubject(username)
-	                .setIssuedAt(new Date())
-	                .setExpiration(generateExpirationDate())
-	                .signWith( SIGNATURE_ALGORITHM, secretKey )
-	                .compact();
-	  }
-	 
-	 private Date generateExpirationDate() {
-		 return new Date(new Date().getTime() + expiresIn * 1000);
-	 }
-	 
-	 public Boolean validateToken(String token, UserDetails userDetails) {
-	        final String username = getUsernameFromToken(token);
-	        return (
-	                username != null &&
-	                username.equals(userDetails.getUsername()) &&
-	                        !isTokenExpired(token)
-	        );
-	  }
-	 
-	 public boolean isTokenExpired(String token) {
-		Date expireDate=getExpirationDate(token);
-		return expireDate.before(new Date());
-	}
-
-
-	private Date getExpirationDate(String token) {
-		 Date expireDate;
-	        try {
-	            final Claims claims = this.getAllClaimsFromToken(token);
-	            expireDate = claims.getExpiration();
-	        } catch (Exception e) {
-	        	expireDate = null;
-	        }
-	        return expireDate;
-	}
-
-
-	public Date getIssuedAtDateFromToken(String token) {
-	        Date issueAt;
-	        try {
-	            final Claims claims = this.getAllClaimsFromToken(token);
-	            issueAt = claims.getIssuedAt();
-	        } catch (Exception e) {
-	            issueAt = null;
-	        }
-	        return issueAt;
-	  }
-	
-	public String getToken( HttpServletRequest request ) {
-      
-        String authHeader = getAuthHeaderFromHeader( request );
-        if ( authHeader != null && authHeader.startsWith("Bearer ")) {
-            return authHeader.substring(7);
+    private String[] getClaimsFromUser(UserPrincipal user) {
+        List<String> authorities = new ArrayList<>();
+        for (GrantedAuthority grantedAuthority : user.getAuthorities()){
+            authorities.add(grantedAuthority.getAuthority());
         }
-
-        return null;
-    }
-
-	public String getAuthHeaderFromHeader( HttpServletRequest request ) {
-        return request.getHeader("Authorization");
+        return authorities.toArray(new String[0]);
     }
 }

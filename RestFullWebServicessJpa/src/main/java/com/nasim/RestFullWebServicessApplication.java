@@ -18,12 +18,16 @@ public class RestFullWebServicessApplication {
 	public static void main(String[] args) {
 		SpringApplication.run(RestFullWebServicessApplication.class, args);
 	}
+/*
+	@Autowired
+	private RoleRepository roleRepository;
 
-	/*
-	 * @Autowired private RoleRepository roleRepository;
-	 * 
-	 * @PostConstruct protected void init() { // add user role List<Role> roleList =
-	 * new ArrayList<>(); roleList.add(new Role("ROLE_ADMIN")); roleList.add(new
-	 * Role("ROLE_USER")); roleRepository.saveAll(roleList); }
-	 */
+	@PostConstruct
+	protected void init() { // add user role 
+		List<Role> roleList =new ArrayList<>();
+		roleList.add(new Role("ROLE_ADMIN"));
+		roleList.add(new Role("ROLE_USER"));
+		roleRepository.saveAll(roleList);
+	}
+*/
 }

@@ -4,12 +4,8 @@ import static org.springframework.http.HttpStatus.ACCEPTED;
 import static org.springframework.http.HttpStatus.CREATED;
 import static org.springframework.http.HttpStatus.OK;
 
-import java.security.NoSuchAlgorithmException;
-import java.security.spec.InvalidKeySpecException;
 import java.util.List;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import javax.validation.Valid;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,51 +20,46 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.nasim.model.Todo;
 import com.nasim.model.User;
-import com.nasim.resquest.LoginRequest;
+import com.nasim.service.TodoService;
 import com.nasim.service.UserService;
 
 @RestController
 @RequestMapping("/api/v1")
 @CrossOrigin("http://localhost:3000")
-//@PreAuthorize("hasAnyRole('ROLE_ADMIN')")
-public class UserController {
+public class TodoController {
 	@Autowired
-	private UserService userService;
+	private TodoService todoService;
 
-	@PostMapping("/login")
-	public ResponseEntity<?> login(@RequestBody LoginRequest login, HttpServletRequest request,HttpServletResponse response) {
-		return userService.login(login);
+	@PostMapping("/todos")
+	public ResponseEntity<Todo> createdTodo(@Valid @RequestBody Todo todos) {
+		todos = todoService.save(todos);
+		return new ResponseEntity<Todo>(todos, CREATED);
 	}
 
-	@PostMapping("/register")
-	public ResponseEntity<User> createdPost(@Valid @RequestBody User user) {
-		user = userService.save(user);
-		return new ResponseEntity<User>(user, CREATED);
+	@GetMapping("/todos")
+	public ResponseEntity<List<Todo>> GetAllTodos() {
+		List<Todo> todos = todoService.findAllTodos();
+		return new ResponseEntity<>(todos, OK);
 	}
 
-	@GetMapping("/users")
-	public ResponseEntity<List<User>> GetAllUsers() {
-		List<User> users = userService.findAll();
-		return new ResponseEntity<>(users, OK);
-	}
-
-	@GetMapping("/users/{id}")
+	@GetMapping("/todos/{id}")
 	public ResponseEntity<?> findOne(@PathVariable int id) {
-		User user = userService.findByTodoId(id);
-		return new ResponseEntity<>(user, OK);
+		Todo todos = todoService.findByTodoId(id);
+		return new ResponseEntity<>(todos, OK);
 	}
 
-	@PutMapping("/users/{id}")
-	public ResponseEntity<User> updateUser(@Valid @RequestBody User user, @PathVariable("id") int id) {
-		user = userService.update(user);
+	@PutMapping("/todos/{id}")
+	public ResponseEntity<Todo> updateUser(@Valid @RequestBody Todo todo, @PathVariable("id") int id) {
+		todo = todoService.update(todo);
 
-		return new ResponseEntity<User>(user, OK);
+		return new ResponseEntity<Todo>(todo, OK);
 	}
 
-	@DeleteMapping("/users/{id}")
+	@DeleteMapping("/todos/{id}")
 	public ResponseEntity<Void> deleteUser(@PathVariable("id") int id) {
-		userService.deleteByTodoId(id);
+		todoService.deleteByTodoId(id);
 		return new ResponseEntity<Void>(ACCEPTED);
 	}
 

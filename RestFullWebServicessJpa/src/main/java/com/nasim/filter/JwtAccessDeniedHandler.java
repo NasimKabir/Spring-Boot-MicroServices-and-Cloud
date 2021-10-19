@@ -15,7 +15,7 @@ import org.springframework.security.web.access.AccessDeniedHandler;
 import org.springframework.stereotype.Component;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nasim.response.Response;
+import com.nasim.response.HttpResponse;
 
 
 @Component
@@ -23,7 +23,7 @@ public class JwtAccessDeniedHandler implements AccessDeniedHandler {
 
     @Override
     public void handle(HttpServletRequest request, HttpServletResponse response, AccessDeniedException exception) throws IOException {
-    	Response httpResponse = new Response(HttpStatus.UNAUTHORIZED.value(),"Internal Server Exception");
+    	HttpResponse httpResponse = new HttpResponse(HttpStatus.UNAUTHORIZED.value(),"Internal Server Exception");
          response.setContentType(APPLICATION_JSON_VALUE);
          response.setStatus(UNAUTHORIZED.value());
          OutputStream outputStream = response.getOutputStream();
